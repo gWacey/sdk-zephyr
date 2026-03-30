@@ -1,0 +1,99 @@
+if(CONFIG_ETSILC3)
+zephyr_library_named(etsilc3)
+zephyr_library_compile_options(
+  -O3 -pedantic -Wcast-qual -Wall -Wextra -Wno-long-long -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration
+)
+
+zephyr_include_directories(
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src
+)
+
+zephyr_library_include_directories(
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src
+)
+
+zephyr_library_sources(
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_opbasop32.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_opcontrol.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_opcount.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_opdynmem.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_openh1632.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_openh40.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basic_openhUL32.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/adjust_global_gain_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/al_fec.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/apply_global_gain_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/ari_codec.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/attack_detector_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basop_mpy.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/basop_util.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/ccConvert.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/codec_exe.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/com_entropy.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/constants.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/cutoff_bandwidth.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/dct2_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/dct4_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/dec_entropy.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/dec_lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/detect_cutoff_warped_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/enc_entropy.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/enc_lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/estimate_global_gain_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/fft.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/imdct_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/levinson_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/ltpf_coder_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/ltpf_decoder_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/mdct_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/mdct_shaping_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/near_nyquist_detector_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/noise_factor_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/noise_filling_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/olpa_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pc_apply_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pc_classify_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pc_main_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pc_update_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/per_band_energy_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_apply_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_classify_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_damping_scrambling_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/"plc_lpc_scaling_fx.c,"
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_main_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_noise_substitution_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_f0_refine_first_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_fec_hq_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_lf_peak_analysis_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_peak_locator_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_setf0hz_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_phecu_tools_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_tdac_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_tdc_inverse_odft_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_tdc_lagwin_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_tdc_main_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_tdc_pre_emphasis_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_update_aft_imdct_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_update_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/plc_xcorr_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pvq_dec_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pvq_enc_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/pvq_index_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/"quantize_spec_fx.c,"
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/reorder_bitstream_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/resamp12k8_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/residual_coding_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/residual_decoding_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/rom_basop_util.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/scale_signal24_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/setup_com_lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/setup_dec_lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/setup_enc_lc3plus.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/sns_compute_scf_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/sns_interpolate_scf_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/sns_quantize_scf_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/tns_coder_fx.c
+  ${ZEPHYR_ETSILC3_MODULE_DIR}/src/tns_decoder_fx.c
+)
+endif()
