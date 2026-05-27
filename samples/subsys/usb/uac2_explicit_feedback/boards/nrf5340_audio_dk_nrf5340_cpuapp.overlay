@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2023 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include "../app.overlay"
+
+/ {
+	aliases {
+		i2s-tx = &i2s0;
+	};
+};
+
+&clock {
+	hfclkaudio-frequency = <12288000>;
+};
+
+&i2s0 {
+	clock-source = "ACLK";
+};

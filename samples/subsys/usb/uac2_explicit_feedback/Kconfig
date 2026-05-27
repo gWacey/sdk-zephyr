@@ -11,7 +11,12 @@ config APP_USE_I2S_LRCLK_EDGES_COUNTER
 	  separate GPIOTE input pin (P1.09).
 	  On nRF54 this option requires externally connecting TDM FSYNC back to
 	  separate GPIOTE input pin (P0.08).
+
 endmenu
+
+# Source the hardware codec driver.
+source "${ZEPHYR_NRF_MODULE_DIR}/applications/nrf_audio/src/drivers/Kconfig"
+source "${ZEPHYR_CIRRUS_LOGIC_MODULE_DIR}/Kconfig"
 
 # Source common USB sample options used to initialize new experimental USB
 # device stack. The scope of these options is limited to USB samples in project

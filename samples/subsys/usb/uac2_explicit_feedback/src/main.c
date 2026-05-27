@@ -16,9 +16,25 @@
 #include <zephyr/drivers/i2s.h>
 #include <zephyr/logging/log.h>
 
+#if CONFIG_HW_CODEC_CIRRUS_LOGIC
+#include <zephyr/drivers/gpio.h>
+#include "macros_common.h"
+#include "bsp_driver_if.h"
+#include "cs47l63.h"
+#include "cs47l63_spec.h"
+#include "cs47l63_reg_conf.h"
+#include "cs47l63_comm.h"
+#endif /* (CONFIG_HW_CODEC_CIRRUS_LOGIC) */
+
 LOG_MODULE_REGISTER(uac2_sample, LOG_LEVEL_INF);
 
 #define HEADPHONES_OUT_TERMINAL_ID UAC2_ENTITY_ID(DT_NODELABEL(out_terminal))
+
+#if CONFIG_BOARD_NRF5340_AUDIO_DK_NRF5340_CPUAPP
+#define I2S_TX DT_ALIAS(i2s_tx)
+#else
+#define I2S_TX DT_NODELABEL(i2s_tx)
+#endif /* CONFIG_BOARD_NRF5340_AUDIO_DK_NRF5340_CPUAPP */
 
 #define FS_SAMPLES_PER_SOF  48
 #define HS_SAMPLES_PER_SOF  6
@@ -31,15 +47,20 @@ LOG_MODULE_REGISTER(uac2_sample, LOG_LEVEL_INF);
 #define MIN_BLOCK_SIZE      ((MAX_SAMPLES_PER_SOF - 1) * BYTES_PER_SLOT)
 #define BLOCK_SIZE          (MAX_SAMPLES_PER_SOF * BYTES_PER_SLOT)
 #define MAX_BLOCK_SIZE      ((MAX_SAMPLES_PER_SOF + 1) * BYTES_PER_SLOT)
+#define MAX_VOLUME_REG_VAL  0x80
 
 /* Absolute minimum is 5 buffers (1 actively consumed by I2S, 2nd queued as next
  * buffer, 3rd acquired by USB stack to receive data to, and 2 to handle SOF/I2S
  * offset errors), but add 2 additional buffers to prevent out of memory errors
  * when USB host decides to perform rapid terminal enable/disable cycles.
  */
-#define I2S_BUFFERS_COUNT   7
+#define I2S_BUFFERS_COUNT 7
 K_MEM_SLAB_DEFINE_STATIC(i2s_tx_slab, ROUND_UP(MAX_BLOCK_SIZE, UDC_BUF_GRANULARITY),
 			 I2S_BUFFERS_COUNT, UDC_BUF_ALIGN);
+
+#if CONFIG_HW_CODEC_CIRRUS_LOGIC
+static cs47l63_t cs47l63_driver;
+#endif /* CONFIG_HW_CODEC_CIRRUS_LOGIC */
 
 struct usb_i2s_ctx {
 	const struct device *i2s_dev;
@@ -47,7 +68,7 @@ struct usb_i2s_ctx {
 	bool i2s_started;
 	bool microframes;
 	/* Number of blocks written, used to determine when to start I2S.
-	 * Overflows are not a problem becuse this variable is not necessary
+	 * Overflows are not a problem because this variable is not necessary
 	 * after I2S is started.
 	 */
 	uint8_t i2s_blocks_written;
@@ -259,6 +280,123 @@ static struct uac2_ops usb_audio_ops = {
 
 static struct usb_i2s_ctx main_ctx;
 
+#if CONFIG_HW_CODEC_CIRRUS_LOGIC
+/**
+ * @brief Write to multiple registers in CS47L63.
+ */
+static int cs47l63_comm_reg_conf_write(const uint32_t config[][2], uint32_t num_of_regs)
+{
+	int ret;
+	uint32_t reg;
+	uint32_t value;
+
+	for (int i = 0; i < num_of_regs; i++) {
+		reg = config[i][0];
+		value = config[i][1];
+
+		if (reg == SPI_BUSY_WAIT) {
+			LOG_DBG("Busy waiting instead of writing to CS47L63");
+			/* Wait for us defined in value */
+			k_busy_wait(value);
+		} else {
+			ret = cs47l63_write_reg(&cs47l63_driver, reg, value);
+			if (ret) {
+				printk("Failed to write to CS47L63 reg 0x%08X: %d\n", reg, ret);
+				return ret;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int hw_codec_default_conf_enable(void)
+{
+	int ret;
+
+	ret = cs47l63_comm_reg_conf_write(clock_configuration, ARRAY_SIZE(clock_configuration));
+	if (ret) {
+		printk("Failed to configure clock of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	ret = cs47l63_comm_reg_conf_write(GPIO_configuration, ARRAY_SIZE(GPIO_configuration));
+	if (ret) {
+		printk("Failed to configure GPIOs of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	ret = cs47l63_comm_reg_conf_write(asp1_enable, ARRAY_SIZE(asp1_enable));
+	if (ret) {
+		printk("Failed to enable ASP1 of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	ret = cs47l63_comm_reg_conf_write(output_enable, ARRAY_SIZE(output_enable));
+	if (ret) {
+		printk("Failed to enable output of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	ret = cs47l63_write_reg(&cs47l63_driver, CS47L63_OUT1L_VOLUME_1,
+				MAX_VOLUME_REG_VAL | CS47L63_OUT_VU);
+	if (ret) {
+		printk("Failed to set output volume: %d\n", ret);
+		return ret;
+	}
+
+	/* Toggle FLL to start up CS47L63 */
+	ret = cs47l63_comm_reg_conf_write(FLL_toggle, ARRAY_SIZE(FLL_toggle));
+	if (ret) {
+		printk("Failed to toggle FLL of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
+int hw_codec_soft_reset(void)
+{
+	int ret;
+
+	ret = cs47l63_comm_reg_conf_write(output_disable, ARRAY_SIZE(output_disable));
+	if (ret) {
+		printk("Failed to disable output of the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	ret = cs47l63_comm_reg_conf_write(soft_reset, ARRAY_SIZE(soft_reset));
+	if (ret) {
+		printk("Failed to reset the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
+int hw_codec_init(void)
+{
+	int ret;
+
+	ret = cs47l63_comm_init(&cs47l63_driver);
+	if (ret) {
+		printk("Failed to initialize the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	/* Run a soft reset on start to make sure all registers are default values */
+	ret = cs47l63_comm_reg_conf_write(soft_reset, ARRAY_SIZE(soft_reset));
+	if (ret) {
+		printk("Failed to reset the hardware codec: %d\n", ret);
+		return ret;
+	}
+
+	cs47l63_driver.state = CS47L63_STATE_STANDBY;
+
+	return 0;
+}
+#endif
+
 int main(void)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(uac2_headphones));
@@ -266,7 +404,7 @@ int main(void)
 	struct i2s_config config;
 	int ret;
 
-	main_ctx.i2s_dev = DEVICE_DT_GET(DT_NODELABEL(i2s_tx));
+	main_ctx.i2s_dev = DEVICE_DT_GET(I2S_TX);
 
 	if (!device_is_ready(main_ctx.i2s_dev)) {
 		printk("%s is not ready\n", main_ctx.i2s_dev->name);
@@ -285,7 +423,22 @@ int main(void)
 	ret = i2s_configure(main_ctx.i2s_dev, I2S_DIR_TX, &config);
 	if (ret < 0) {
 		printk("Failed to configure TX stream: %d\n", ret);
-		return 0;
+		return ret;
+	}
+
+	if (IS_ENABLED(CONFIG_BOARD_NRF5340_AUDIO_DK_NRF5340_CPUAPP)) {
+		/* Configure the hardware codec now I2S bit-clock is running */
+		ret = hw_codec_init();
+		if (ret) {
+			printk("Failed to initialize HW codec: %d", ret);
+			return ret;
+		}
+
+		ret = hw_codec_default_conf_enable();
+		if (ret) {
+			printk("Failed to set default HW codec configuration: %d", ret);
+			return ret;
+		}
 	}
 
 	main_ctx.fb = feedback_init();
