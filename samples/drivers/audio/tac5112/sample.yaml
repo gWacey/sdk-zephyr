@@ -1,0 +1,28 @@
+sample:
+  name: TAC5112 audio codec
+  description: >
+    Configure and drive a TI TAC5112 stereo audio codec through the Zephyr
+    audio codec API: tone playback and an ADC-to-DAC loopback. Runs on the
+    Nordic nRF54LM20 DK (TDM) or nRF5340 DK (I2S) against a real codec, or
+    on native_sim against the mock.
+
+common:
+  tags:
+    - audio
+    - codec
+  harness: console
+  harness_config:
+    type: one_line
+    regex:
+      - "TAC5112 sample complete"
+
+tests:
+  sample.drivers.audio.tac5112:
+    platform_allow:
+      - native_sim
+      - native_sim/native/64
+      - nrf54lm20dk/nrf54lm20a/cpuapp
+      - nrf5340dk/nrf5340/cpuapp
+      - nrf5340_audio_dk/nrf5340/cpuapp
+    integration_platforms:
+      - native_sim

@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2026 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * PRODUCTION wiring overlay: a physical TAC5112 driven over a real TWIM
+ * (I2C) instance on a Nordic nRF54LM20 DK (nrf54lm20dk/nrf54lm20a/cpuapp).
+ *
+ * This is for real applications, NOT the ztest suite (which uses the
+ * software mock). For an application this overlay will need to be
+ * called directly. Ultimately the overlay will reside in a shield
+ * description for the nRF-Audio-EB.
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+&pinctrl {
+	i2c22_tac5112_default: i2c22_tac5112_default {
+		group1 {
+			/* EXP header (P17): F0->P1.07 (SCL), F1->P1.06 (SDA) */
+			psels = <NRF_PSEL(TWIM_SCL, 1, 7)>,
+				<NRF_PSEL(TWIM_SDA, 1, 6)>;
+			bias-pull-up; /* internal ~13 kOhm; required if EB has none */
+		};
+	};
+
+	i2c22_tac5112_sleep: i2c22_tac5112_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SCL, 1, 7)>,
+				<NRF_PSEL(TWIM_SDA, 1, 6)>;
+			low-power-enable;
+		};
+	};
+};
+
+&i2c22 {
+	status = "okay";
+	compatible = "nordic,nrf-twim";
+	clock-frequency = <I2C_BITRATE_FAST>; /* TAC5112 supports fast-mode plus */
+	pinctrl-0 = <&i2c22_tac5112_default>;
+	pinctrl-1 = <&i2c22_tac5112_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	tac5112_0: audio-codec@50 {
+		compatible = "ti,tac5112";
+		reg = <0x50>;
+		reset-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+		fault-gpios = <&gpio3 2 GPIO_ACTIVE_LOW>;
+	};
+};

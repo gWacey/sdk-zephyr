@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2026 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Runs the sample against the software TAC5112 mock (no hardware). Declares
+ * its own zephyr,i2c-emul-controller so it does not depend on the board
+ * shipping an emulated I2C bus.
+ */
+
+#include <zephyr/dt-bindings/i2c/i2c.h>
+
+/ {
+	aliases {
+		tac5112-0 = &tac5112;
+	};
+
+	tac5112_i2c: i2c@100 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		reg = <0x100 4>;
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		tac5112: audio-codec@50 {
+			compatible = "ti,tac5112";
+			reg = <0x50>;
+		};
+	};
+};
